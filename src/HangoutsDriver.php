@@ -41,7 +41,7 @@ class HangoutsDriver extends HttpDriver
      */
     public function matchesRequest()
     {
-        return $this->event->get('token') === $this->config->get('token') && $this->event->get('type') === 'MESSAGE';
+        return $this->event->get('token') === $this->config->get('token') && ($this->event->get('type') === 'MESSAGE' || $this->event->get('type') === 'CARD_CLICKED');
     }
 
     /**
@@ -123,7 +123,14 @@ class HangoutsDriver extends HttpDriver
      */
     public function getConversationAnswer(IncomingMessage $message)
     {
-        return Answer::create($message->getText())->setMessage($message);
+        $interactive = false;
+        if($this->event->get('type') === 'CARD_CLICKED')
+            $interactive = true;
+        //this needs work, the 'value' is nested in the card data I'm sure.
+        return Answer::create($message->getText())
+            ->setValue($this->event->get('value', $message->getText()))
+            ->setMessage($message)
+            ->setInteractiveReply($interactive);
     }
 
     /**
